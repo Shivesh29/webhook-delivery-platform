@@ -1,5 +1,5 @@
 server:
-  port: 8085
+  port: ${PORT:8085}
 
 spring:
   application:
@@ -32,11 +32,12 @@ springdoc:
 webhook:
   security:
     # Default admin API key for authenticating incoming requests
-    api-key: "wh_live_adminkey_2026_secret"
+    api-key: "${WEBHOOK_API_KEY:wh_live_adminkey_2026_secret}"
+    allow-loopback: ${WEBHOOK_ALLOW_LOOPBACK:true}
   delivery:
-    max-attempts: 5
-    connect-timeout-ms: 3000
-    read-timeout-ms: 5000
+    max-attempts: ${WEBHOOK_MAX_ATTEMPTS:5}
+    connect-timeout-ms: ${WEBHOOK_CONNECT_TIMEOUT_MS:3000}
+    read-timeout-ms: ${WEBHOOK_READ_TIMEOUT_MS:5000}
     # Base backoff delays in seconds for retry attempts (attempt 1: immediate, attempt 2: +60s, attempt 3: +300s, attempt 4: +1800s, attempt 5: +7200s)
     backoff-multipliers-seconds:
       - 60
@@ -44,6 +45,6 @@ webhook:
       - 1800
       - 7200
   worker:
-    polling-interval-ms: 5000
-    batch-size: 50
+    polling-interval-ms: ${WEBHOOK_WORKER_POLL_MS:5000}
+    batch-size: ${WEBHOOK_WORKER_BATCH_SIZE:50}
 
