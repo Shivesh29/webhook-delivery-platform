@@ -6,6 +6,16 @@ Designed to handle mission-critical event distribution with at-least-once delive
 
 ---
 
+## 🌐 Live Cloud Deployment
+
+The platform is deployed live on **Render** (Singapore) paired with a serverless **Neon PostgreSQL** database:
+
+* 🖥️ **Live Developer Dashboard:** **[https://webhook-delivery-platform-8f1c.onrender.com/](https://webhook-delivery-platform-8f1c.onrender.com/)**
+* 📚 **Interactive Swagger UI:** **[https://webhook-delivery-platform-8f1c.onrender.com/swagger-ui.html](https://webhook-delivery-platform-8f1c.onrender.com/swagger-ui.html)**
+* 🔑 **Default Management API Key:** `wh_live_adminkey_2026_secret`
+
+---
+
 ## 🌟 Key Architecture & Features
 
 - **Asynchronous Virtual Thread Dispatcher:** Leverages Java 21 Virtual Threads (`spring.threads.virtual.enabled=true`) with non-blocking native `HttpClient` for concurrent outbound webhook dispatches.
