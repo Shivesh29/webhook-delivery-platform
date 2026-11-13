@@ -21,6 +21,8 @@ public interface DeliveryRepository extends JpaRepository<Delivery, String> {
 
     List<Delivery> findByStatus(DeliveryStatus status);
 
+    long countByStatus(DeliveryStatus status);
+
     @Query("SELECT d FROM Delivery d JOIN FETCH d.endpoint JOIN FETCH d.event " +
            "WHERE d.status IN :statuses AND (d.nextRetryAt IS NULL OR d.nextRetryAt <= :now) " +
            "ORDER BY d.createdAt ASC")

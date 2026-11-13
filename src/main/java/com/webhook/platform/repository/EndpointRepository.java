@@ -10,5 +10,7 @@ import java.util.List;
 public interface EndpointRepository extends JpaRepository<Endpoint, String> {
 
     List<Endpoint> findByEnabledTrue();
+
+    long countByEnabledTrue();
 }
 

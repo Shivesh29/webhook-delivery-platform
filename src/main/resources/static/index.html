@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webhook Delivery Platform — Console</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    code, pre, .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.25);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-[#0b0f19] text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Logo & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white font-bold">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-base font-bold tracking-tight">Webhook Delivery Engine</h1>
+            <span class="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Java 21 Loom</span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400">High-throughput, HMAC-signed resilient dispatch</p>
+        </div>
+      </div>
+
+      <!-- Actions & Controls -->
+      <div class="flex items-center space-x-3">
+        <!-- API Key Indicator -->
+        <div class="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-slate-400">Key:</span>
+          <span id="apiKeyDisplay" class="font-mono text-slate-600 dark:text-slate-300">wh_live_***</span>
+          <button onclick="promptChangeApiKey()" class="text-indigo-500 hover:text-indigo-400 font-medium ml-1">Edit</button>
+        </div>
+
+        <!-- Swagger Link -->
+        <a href="/swagger-ui.html" target="_blank" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition flex items-center space-x-1.5">
+          <span>Swagger Docs</span>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+
+        <!-- Dark/Light Theme Toggle -->
+        <button id="themeToggle" onclick="toggleTheme()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition text-slate-600 dark:text-slate-300">
+          <svg id="themeIconDark" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg id="themeIconLight" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+
+    <!-- METRICS CARDS -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <!-- Total Deliveries -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 shadow-sm relative overflow-hidden">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Total Deliveries</span>
+          <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <div id="statTotal" class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">0</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center space-x-1">
+          <span class="text-indigo-400 font-semibold" id="statPending">0</span> <span>currently in flight</span>
+        </div>
+      </div>
+
+      <!-- Success Rate -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 shadow-sm">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Success Rate</span>
+          <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div id="statRate" class="text-3xl font-bold tracking-tight text-emerald-500">100%</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center space-x-1">
+          <span class="text-emerald-500 font-semibold" id="statSuccess">0</span> <span>successful deliveries</span>
+        </div>
+      </div>
+
+      <!-- Dead Letter (DLQ) -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 shadow-sm">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Dead Letter (DLQ)</span>
+          <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div id="statDeadLetter" class="text-3xl font-bold tracking-tight text-rose-500">0</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center space-x-1">
+          <span class="text-amber-400 font-semibold" id="statRetrying">0</span> <span>actively retrying</span>
+        </div>
+      </div>
+
+      <!-- Active Endpoints -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 shadow-sm">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Subscribers</span>
+          <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        </div>
+        <div id="statEndpoints" class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">0</div>
+        <div class="text-[11px] text-slate-500 mt-1">
+          <span>Active destination endpoints</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+      <div class="flex space-x-2">
+        <button onclick="switchTab('deliveries')" id="tabBtn-deliveries" class="px-4 py-2 text-sm font-semibold rounded-xl bg-indigo-600 text-white shadow-sm transition">
+          Deliveries Stream
+        </button>
+        <button onclick="switchTab('publish')" id="tabBtn-publish" class="px-4 py-2 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition">
+          Publish Event
+        </button>
+        <button onclick="switchTab('endpoints')" id="tabBtn-endpoints" class="px-4 py-2 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition">
+          Endpoints
+        </button>
+        <button onclick="switchTab('receiver')" id="tabBtn-receiver" class="px-4 py-2 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition flex items-center space-x-1.5">
+          <span>Mock Receiver Live Feed</span>
+          <span id="capturedCountBadge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-500/20 text-indigo-400">0</span>
+        </button>
+      </div>
+
+      <!-- Auto Refresh Toggle -->
+      <div class="flex items-center space-x-2 text-xs text-slate-500">
+        <label class="flex items-center space-x-1.5 cursor-pointer">
+          <input type="checkbox" id="autoRefreshToggle" checked class="rounded border-slate-700 text-indigo-600 focus:ring-0">
+          <span>Live 3s poll</span>
+        </label>
+        <button onclick="refreshData()" class="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition text-slate-400 hover:text-white" title="Refresh Now">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 1: DELIVERIES STREAM -->
+    <div id="tab-deliveries" class="space-y-4">
+      <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 rounded-2xl overflow-hidden shadow-sm">
+        
+        <!-- Filter bar -->
+        <div class="p-4 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between flex-wrap gap-3">
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-semibold text-slate-400">Status Filter:</span>
+            <button onclick="setDeliveryFilter('')" id="filter-all" class="px-2.5 py-1 text-xs rounded-lg bg-indigo-600 text-white font-medium">All</button>
+            <button onclick="setDeliveryFilter('SUCCESS')" id="filter-success" class="px-2.5 py-1 text-xs rounded-lg text-slate-400 hover:text-white font-medium">Success</button>
+            <button onclick="setDeliveryFilter('RETRYING')" id="filter-retrying" class="px-2.5 py-1 text-xs rounded-lg text-slate-400 hover:text-white font-medium">Retrying</button>
+            <button onclick="setDeliveryFilter('DEAD_LETTER')" id="filter-deadletter" class="px-2.5 py-1 text-xs rounded-lg text-slate-400 hover:text-white font-medium">Dead Letter</button>
+          </div>
+          <div class="text-xs text-slate-500">
+            Showing <span id="deliveryCount" class="font-semibold text-slate-300">0</span> deliveries
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 dark:bg-slate-900/40 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-800/80">
+              <tr>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Event Type</th>
+                <th class="py-3 px-4">Destination Endpoint</th>
+                <th class="py-3 px-4">Attempts</th>
+                <th class="py-3 px-4">Next Retry / Delivered</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="deliveriesTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono text-xs">
+              <tr>
+                <td colspan="6" class="text-center py-12 text-slate-500">
+                  Loading deliveries...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: PUBLISH EVENT -->
+    <div id="tab-publish" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left: Form -->
+        <div class="lg:col-span-2 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm space-y-4">
+          <div>
+            <h3 class="text-base font-bold">Publish Outbound Event</h3>
+            <p class="text-xs text-slate-500">Ingest an event payload with an Idempotency-Key. The engine will match subscribers and trigger parallel dispatch.</p>
+          </div>
+
+          <!-- Quick Presets -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Quick Presets</label>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="setEventPreset('order')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                🛍️ Order Created ($149.99)
+              </button>
+              <button onclick="setEventPreset('payment')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                💳 Payment Completed
+              </button>
+              <button onclick="setEventPreset('flaky')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition">
+                ⚡ Flaky Server Test (Retries)
+              </button>
+            </div>
+          </div>
+
+          <!-- Event Type -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Event Type</label>
+            <input type="text" id="publishEventType" value="order.created" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-mono focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <!-- Idempotency Key -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-semibold text-slate-400">Idempotency Key (Deduplication)</label>
+              <button onclick="regenerateIdempotencyKey()" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Generate New</button>
+            </div>
+            <input type="text" id="publishIdempotencyKey" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-mono focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <!-- Payload Editor -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Payload JSON</label>
+            <textarea id="publishPayload" rows="6" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-mono focus:outline-none focus:border-indigo-500 custom-scrollbar"></textarea>
+          </div>
+
+          <div class="flex justify-end pt-2">
+            <button onclick="submitPublishEvent()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition shadow-lg shadow-indigo-600/20 flex items-center space-x-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+              <span>Dispatch Webhook</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Ingestion Result Console -->
+        <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm flex flex-col">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ingestion Response</h4>
+          <pre id="publishResult" class="flex-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-400 overflow-auto custom-scrollbar whitespace-pre-wrap">Click 'Dispatch Webhook' to test ingestion and view server response...</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: ENDPOINTS -->
+    <div id="tab-endpoints" class="hidden space-y-6">
+      
+      <!-- Top banner & Add form -->
+      <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-bold">Registered Webhook Endpoints</h3>
+            <p class="text-xs text-slate-500">Target HTTP destinations configured to receive notifications. Secrets are used to sign headers with HMAC-SHA256.</p>
+          </div>
+          <button onclick="toggleEndpointForm()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow transition">
+            + Register New Endpoint
+          </button>
+        </div>
+
+        <!-- Create Form (Expandable) -->
+        <div id="endpointCreateForm" class="hidden pt-4 border-t border-slate-200 dark:border-slate-800/80 space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Destination URL (HTTP/HTTPS)</label>
+              <input type="text" id="newEndpointUrl" value="http://localhost:8085/api/v1/test-receiver/webhook" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Subscribed Events (* for all)</label>
+              <input type="text" id="newEndpointEvents" value="order.*,payment.completed" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Description (Optional)</label>
+            <input type="text" id="newEndpointDesc" placeholder="e.g. Accounting billing webhook" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs">
+          </div>
+          <div class="flex justify-end space-x-2">
+            <button onclick="toggleEndpointForm()" class="px-3 py-1.5 rounded-lg text-xs bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-300">Cancel</button>
+            <button onclick="submitNewEndpoint()" class="px-4 py-1.5 rounded-lg text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow">Save & Generate Secret</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Endpoints List -->
+      <div id="endpointsListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- TAB 4: MOCK RECEIVER LIVE FEED -->
+    <div id="tab-receiver" class="hidden space-y-4">
+      <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-bold">Built-in Test Receiver Live Logs</h3>
+            <p class="text-xs text-slate-500">Live feed of requests arriving at <code class="text-indigo-400 font-mono">/api/v1/test-receiver/*</code>. Verifies signature headers without needing external tools.</p>
+          </div>
+          <button onclick="clearReceiverHistory()" class="px-3 py-1.5 rounded-lg text-xs bg-slate-200 dark:bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-400 transition">
+            Clear Captured Feed
+          </button>
+        </div>
+
+        <div id="receiverFeedContainer" class="space-y-3 font-mono text-xs">
+          <div class="text-center py-12 text-slate-500">No requests captured on test receiver yet.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ATTEMPT AUDIT MODAL -->
+  <div id="attemptsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div>
+          <h3 class="text-base font-bold">Delivery Audit Trail</h3>
+          <p id="modalDeliveryId" class="text-xs font-mono text-slate-400">ID: ...</p>
+        </div>
+        <button onclick="closeModal()" class="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Attempt List -->
+      <div id="modalAttemptsList" class="space-y-3">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-6 right-6 px-4 py-3 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow-2xl z-50 transform translate-y-20 opacity-0 transition duration-300 flex items-center space-x-2">
+    <span id="toastMessage">Success</span>
+  </div>
+
+  <script>
+    // --- STATE MANAGEMENT ---
+    let currentTab = 'deliveries';
+    let currentFilter = '';
+    let apiKey = localStorage.getItem('webhook_api_key') || 'wh_live_adminkey_2026_secret';
+
+    // Set initial display
+    document.getElementById('apiKeyDisplay').innerText = apiKey.slice(0, 10) + '...';
+    regenerateIdempotencyKey();
+    setEventPreset('order');
+
+    function promptChangeApiKey() {
+      const newKey = prompt('Enter Webhook Admin API Key:', apiKey);
+      if (newKey && newKey.trim()) {
+        apiKey = newKey.trim();
+        localStorage.setItem('webhook_api_key', apiKey);
+        document.getElementById('apiKeyDisplay').innerText = apiKey.slice(0, 10) + '...';
+        showToast('API Key updated');
+        refreshData();
+      }
+    }
+
+    // --- DARK MODE THEME TOGGLE ---
+    function initTheme() {
+      if (localStorage.theme === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+      }
+    }
+    initTheme();
+
+    function toggleTheme() {
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.theme = 'light';
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.theme = 'dark';
+      }
+    }
+
+    // --- TAB SWITCHER ---
+    function switchTab(tab) {
+      currentTab = tab;
+      ['deliveries', 'publish', 'endpoints', 'receiver'].forEach(t => {
+        document.getElementById('tab-' + t).classList.add('hidden');
+        document.getElementById('tabBtn-' + t).className = 'px-4 py-2 text-sm font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition';
+      });
+
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+      document.getElementById('tabBtn-' + tab).className = 'px-4 py-2 text-sm font-semibold rounded-xl bg-indigo-600 text-white shadow-sm transition';
+
+      refreshData();
+    }
+
+    function setDeliveryFilter(status) {
+      currentFilter = status;
+      ['all', 'success', 'retrying', 'deadletter'].forEach(s => {
+        const btn = document.getElementById('filter-' + s);
+        if (btn) btn.className = 'px-2.5 py-1 text-xs rounded-lg text-slate-400 hover:text-white font-medium';
+      });
+
+      const activeBtnId = status === '' ? 'filter-all' :
+                          status === 'SUCCESS' ? 'filter-success' :
+                          status === 'RETRYING' ? 'filter-retrying' : 'filter-deadletter';
+      const el = document.getElementById(activeBtnId);
+      if (el) el.className = 'px-2.5 py-1 text-xs rounded-lg bg-indigo-600 text-white font-medium';
+
+      loadDeliveries();
+    }
+
+    // --- API CALLS ---
+    async function apiRequest(endpoint, method = 'GET', body = null, customHeaders = {}) {
+      const headers = {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+        ...customHeaders
+      };
+      const options = { method, headers };
+      if (body) options.body = JSON.stringify(body);
+
+      const res = await fetch(endpoint, options);
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || res.statusText);
+      }
+      if (res.status === 204) return null;
+      return await res.json();
+    }
+
+    // --- LOAD STATS ---
+    async function loadStats() {
+      try {
+        const stats = await apiRequest('/api/v1/deliveries/stats');
+        document.getElementById('statTotal').innerText = stats.totalDeliveries;
+        document.getElementById('statSuccess').innerText = stats.successCount;
+        document.getElementById('statRetrying').innerText = stats.retryingCount;
+        document.getElementById('statDeadLetter').innerText = stats.deadLetterCount;
+        document.getElementById('statPending').innerText = stats.pendingCount;
+        document.getElementById('statRate').innerText = stats.successRatePercent + '%';
+        document.getElementById('statEndpoints').innerText = stats.activeEndpointsCount;
+      } catch (e) {
+        console.warn('Failed loading stats:', e);
+      }
+    }
+
+    // --- LOAD DELIVERIES ---
+    async function loadDeliveries() {
+      try {
+        const url = currentFilter ? `/api/v1/deliveries?status=${currentFilter}` : '/api/v1/deliveries';
+        const list = await apiRequest(url);
+        document.getElementById('deliveryCount').innerText = list.length;
+
+        const tbody = document.getElementById('deliveriesTableBody');
+        if (!list || list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-500">No deliveries found. Publish an event to start!</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = list.map(d => {
+          let badge = '';
+          if (d.status === 'SUCCESS') {
+            badge = `<span class="px-2 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">SUCCESS</span>`;
+          } else if (d.status === 'RETRYING') {
+            badge = `<span class="px-2 py-0.5 rounded-full text-[11px] bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold animate-pulse">RETRYING</span>`;
+          } else if (d.status === 'DEAD_LETTER') {
+            badge = `<span class="px-2 py-0.5 rounded-full text-[11px] bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">DEAD_LETTER</span>`;
+          } else {
+            badge = `<span class="px-2 py-0.5 rounded-full text-[11px] bg-sky-500/10 text-sky-400 border border-sky-500/20 font-semibold">PENDING</span>`;
+          }
+
+          const canReplay = d.status === 'DEAD_LETTER' || d.status === 'RETRYING';
+          const replayBtn = canReplay
+            ? `<button onclick="replayDelivery('${d.id}')" class="px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white transition text-xs font-semibold">Replay</button>`
+            : '';
+
+          return `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+              <td class="py-3 px-4">${badge}</td>
+              <td class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-200">${d.eventType}</td>
+              <td class="py-3 px-4 text-slate-400 max-w-[200px] truncate" title="${d.endpointUrl}">${d.endpointUrl}</td>
+              <td class="py-3 px-4 text-slate-300">${d.attemptCount} / ${d.maxAttempts}</td>
+              <td class="py-3 px-4 text-slate-400">${d.deliveredAt ? new Date(d.deliveredAt).toLocaleTimeString() : (d.nextRetryAt ? 'Next: ' + new Date(d.nextRetryAt).toLocaleTimeString() : '-')}</td>
+              <td class="py-3 px-4 text-right space-x-2">
+                <button onclick="viewAttempts('${d.id}')" class="px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-300 font-sans text-xs">Inspect Audit</button>
+                ${replayBtn}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error('Failed to load deliveries', e);
+      }
+    }
+
+    // --- REPLAY DELIVERY ---
+    async function replayDelivery(id) {
+      try {
+        await apiRequest(`/api/v1/deliveries/${id}/replay`, 'POST');
+        showToast('Delivery re-queued for immediate dispatch');
+        refreshData();
+      } catch (e) {
+        showToast('Replay error: ' + e.message);
+      }
+    }
+
+    // --- VIEW AUDIT ATTEMPTS ---
+    async function viewAttempts(deliveryId) {
+      document.getElementById('modalDeliveryId').innerText = 'Delivery ID: ' + deliveryId;
+      document.getElementById('modalAttemptsList').innerHTML = '<div class="text-xs text-slate-400">Loading audit history...</div>';
+      document.getElementById('attemptsModal').classList.remove('hidden');
+
+      try {
+        const attempts = await apiRequest(`/api/v1/deliveries/${deliveryId}/attempts`);
+        if (!attempts || attempts.length === 0) {
+          document.getElementById('modalAttemptsList').innerHTML = '<div class="text-xs text-slate-500">No attempts logged yet.</div>';
+          return;
+        }
+
+        document.getElementById('modalAttemptsList').innerHTML = attempts.map(a => {
+          const is2xx = a.responseStatusCode && a.responseStatusCode >= 200 && a.responseStatusCode < 300;
+          const statusClass = is2xx ? 'text-emerald-400 bg-emerald-500/10' : 'text-rose-400 bg-rose-500/10';
+
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 font-mono text-xs">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <span class="font-bold">Attempt #${a.attemptNumber}</span>
+                  <span class="px-2 py-0.5 rounded ${statusClass} font-semibold">HTTP ${a.responseStatusCode || 'ERR'}</span>
+                </div>
+                <span class="text-slate-500 text-[11px]">${a.durationMs}ms &bull; ${new Date(a.attemptedAt).toLocaleTimeString()}</span>
+              </div>
+              ${a.errorMessage ? `<div class="text-rose-400 text-[11px]">Error: ${a.errorMessage}</div>` : ''}
+              ${a.responseBody ? `<div class="text-slate-400 text-[11px] truncate bg-black/30 p-1.5 rounded">Body: ${a.responseBody}</div>` : ''}
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        document.getElementById('modalAttemptsList').innerHTML = '<div class="text-xs text-rose-400">Failed to load attempts: ' + e.message + '</div>';
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('attemptsModal').classList.add('hidden');
+    }
+
+    // --- PUBLISH PRESETS ---
+    function setEventPreset(type) {
+      if (type === 'order') {
+        document.getElementById('publishEventType').value = 'order.created';
+        document.getElementById('publishPayload').value = JSON.stringify({
+          order_id: "ord_" + Math.floor(1000 + Math.random() * 9000),
+          customer_email: "buyer@example.com",
+          amount: 149.99,
+          currency: "USD",
+          items: ["Wireless Headphones", "Travel Case"]
+        }, null, 2);
+      } else if (type === 'payment') {
+        document.getElementById('publishEventType').value = 'payment.completed';
+        document.getElementById('publishPayload').value = JSON.stringify({
+          payment_id: "pay_" + Math.random().toString(36).substring(2, 9),
+          method: "card_visa",
+          status: "succeeded",
+          amount: 149.99
+        }, null, 2);
+      } else if (type === 'flaky') {
+        document.getElementById('publishEventType').value = 'flaky.test';
+        document.getElementById('publishPayload').value = JSON.stringify({
+          test_run: true,
+          notice: "This event routes to /flaky which fails 2 times then succeeds!"
+        }, null, 2);
+      }
+    }
+
+    function regenerateIdempotencyKey() {
+      document.getElementById('publishIdempotencyKey').value = 'key_' + Math.random().toString(36).substring(2, 10);
+    }
+
+    async function submitPublishEvent() {
+      const eventType = document.getElementById('publishEventType').value.trim();
+      const idempotencyKey = document.getElementById('publishIdempotencyKey').value.trim();
+      const payload = document.getElementById('publishPayload').value;
+
+      document.getElementById('publishResult').innerText = 'Publishing event to engine...';
+
+      try {
+        const res = await apiRequest('/api/v1/events', 'POST', {
+          eventType,
+          payload
+        }, {
+          'Idempotency-Key': idempotencyKey
+        });
+
+        document.getElementById('publishResult').innerText = JSON.stringify(res, null, 2);
+        showToast(res.duplicate ? 'Duplicate idempotency key detected!' : 'Event published & dispatched');
+        loadStats();
+      } catch (e) {
+        document.getElementById('publishResult').innerText = 'Error: ' + e.message;
+        showToast('Publish failed');
+      }
+    }
+
+    // --- ENDPOINTS TAB ---
+    function toggleEndpointForm() {
+      document.getElementById('endpointCreateForm').classList.toggle('hidden');
+    }
+
+    async function submitNewEndpoint() {
+      const url = document.getElementById('newEndpointUrl').value.trim();
+      const subscribedEvents = document.getElementById('newEndpointEvents').value.trim();
+      const description = document.getElementById('newEndpointDesc').value.trim();
+
+      try {
+        await apiRequest('/api/v1/endpoints', 'POST', {
+          url,
+          subscribedEvents,
+          description
+        });
+        showToast('Endpoint registered successfully');
+        toggleEndpointForm();
+        loadEndpoints();
+        loadStats();
+      } catch (e) {
+        showToast('Error: ' + e.message);
+      }
+    }
+
+    async function loadEndpoints() {
+      try {
+        const endpoints = await apiRequest('/api/v1/endpoints');
+        const container = document.getElementById('endpointsListContainer');
+
+        if (!endpoints || endpoints.length === 0) {
+          container.innerHTML = `<div class="col-span-2 text-center py-10 text-slate-500">No endpoints registered. Register one above!</div>`;
+          return;
+        }
+
+        container.innerHTML = endpoints.map(ep => `
+          <div class="p-5 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${ep.enabled ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'}">
+                ${ep.enabled ? 'ACTIVE' : 'DISABLED'}
+              </span>
+              <button onclick="deleteEndpoint('${ep.id}')" class="text-xs text-rose-400 hover:text-rose-300">Delete</button>
+            </div>
+            <div>
+              <div class="font-mono text-xs font-semibold text-slate-200 truncate" title="${ep.url}">${ep.url}</div>
+              <div class="text-xs text-slate-400">${ep.description || 'No description'}</div>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono">Events: <span class="text-indigo-400">${ep.subscribedEvents}</span></div>
+            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between font-mono text-[11px]">
+              <span class="text-slate-400 truncate mr-2">${ep.secret}</span>
+              <button onclick="copyToClipboard('${ep.secret}')" class="text-indigo-400 hover:text-indigo-300 font-semibold">Copy</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error('Failed to load endpoints', e);
+      }
+    }
+
+    async function deleteEndpoint(id) {
+      if (!confirm('Are you sure you want to delete this endpoint?')) return;
+      try {
+        await apiRequest('/api/v1/endpoints/' + id, 'DELETE');
+        showToast('Endpoint deleted');
+        loadEndpoints();
+        loadStats();
+      } catch (e) {
+        showToast('Error: ' + e.message);
+      }
+    }
+
+    // --- MOCK RECEIVER TAB ---
+    async function loadReceiverFeed() {
+      try {
+        const requests = await apiRequest('/api/v1/test-receiver/requests');
+        document.getElementById('capturedCountBadge').innerText = requests.length;
+
+        const container = document.getElementById('receiverFeedContainer');
+        if (!requests || requests.length === 0) {
+          container.innerHTML = `<div class="text-center py-10 text-slate-500">No webhook requests captured by the mock receiver yet.</div>`;
+          return;
+        }
+
+        container.innerHTML = requests.map(r => `
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div class="flex items-center justify-between text-[11px]">
+              <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-semibold font-sans">EVENT: ${r.event || 'unspecified'}</span>
+                <span class="text-slate-400">ID: ${r.webhookId || '-'}</span>
+              </div>
+              <span class="text-slate-500">${new Date(r.receivedAt).toLocaleTimeString()}</span>
+            </div>
+            <div class="text-[11px] text-emerald-400 break-all bg-black/40 p-2 rounded">
+              Header Signature: ${r.signature || 'None'}
+            </div>
+            ${r.payload ? `<div class="text-slate-300 text-[11px] bg-black/20 p-2 rounded whitespace-pre-wrap">${r.payload}</div>` : ''}
+          </div>
+        `).join('');
+      } catch (e) {
+        console.warn('Failed to load receiver feed:', e);
+      }
+    }
+
+    async function clearReceiverHistory() {
+      try {
+        await apiRequest('/api/v1/test-receiver/requests', 'DELETE');
+        showToast('Captured requests cleared');
+        loadReceiverFeed();
+      } catch (e) {
+        showToast('Error: ' + e.message);
+      }
+    }
+
+    // --- HELPERS ---
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      showToast('Copied to clipboard');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMessage').innerText = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2500);
+    }
+
+    function refreshData() {
+      loadStats();
+      if (currentTab === 'deliveries') loadDeliveries();
+      if (currentTab === 'endpoints') loadEndpoints();
+      if (currentTab === 'receiver') loadReceiverFeed();
+    }
+
+    // Initial load
+    refreshData();
+
+    // Auto-poll interval (every 3 seconds)
+    setInterval(() => {
+      const isChecked = document.getElementById('autoRefreshToggle').checked;
+      if (isChecked) {
+        refreshData();
+      }
+    }, 3000);
+  </script>
+</body>
+</html>
+

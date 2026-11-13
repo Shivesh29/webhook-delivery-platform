@@ -3,10 +3,12 @@ package com.webhook.platform.service;
 import com.webhook.platform.common.ApiException;
 import com.webhook.platform.dto.DeliveryAttemptResponse;
 import com.webhook.platform.dto.DeliveryResponse;
+import com.webhook.platform.dto.DeliveryStatsResponse;
 import com.webhook.platform.model.Delivery;
 import com.webhook.platform.model.DeliveryStatus;
 import com.webhook.platform.repository.DeliveryAttemptRepository;
 import com.webhook.platform.repository.DeliveryRepository;
+import com.webhook.platform.repository.EndpointRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -23,7 +25,32 @@ public class DeliveryService {
 
     private final DeliveryRepository deliveryRepository;
     private final DeliveryAttemptRepository attemptRepository;
+    private final EndpointRepository endpointRepository;
     private final DeliveryDispatcher deliveryDispatcher;
+
+    @Transactional(readOnly = true)
+    public com.webhook.platform.dto.DeliveryStatsResponse getStats() {
+        long total = deliveryRepository.count();
+        long success = deliveryRepository.countByStatus(DeliveryStatus.SUCCESS);
+        long retrying = deliveryRepository.countByStatus(DeliveryStatus.RETRYING);
+        long deadLetter = deliveryRepository.countByStatus(DeliveryStatus.DEAD_LETTER);
+        long pending = deliveryRepository.countByStatus(DeliveryStatus.PENDING);
+        long activeEndpoints = endpointRepository.countByEnabledTrue();
+
+        double successRate = total > 0 ? ((double) success / total) * 100.0 : 100.0;
+        // round to 1 decimal place
+        successRate = Math.round(successRate * 10.0) / 10.0;
+
+        return com.webhook.platform.dto.DeliveryStatsResponse.builder()
+                .totalDeliveries(total)
+                .successCount(success)
+                .retryingCount(retrying)
+                .deadLetterCount(deadLetter)
+                .pendingCount(pending)
+                .successRatePercent(successRate)
+                .activeEndpointsCount(activeEndpoints)
+                .build();
+    }
 
     @Transactional(readOnly = true)
     public List<DeliveryResponse> listDeliveries(DeliveryStatus status, String eventId, String endpointId) {

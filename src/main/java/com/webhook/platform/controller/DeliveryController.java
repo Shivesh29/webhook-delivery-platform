@@ -20,6 +20,12 @@ public class DeliveryController {
 
     private final DeliveryService deliveryService;
 
+    @GetMapping("/stats")
+    @Operation(summary = "Get platform metrics & delivery statistics")
+    public ResponseEntity<com.webhook.platform.dto.DeliveryStatsResponse> getStats() {
+        return ResponseEntity.ok(deliveryService.getStats());
+    }
+
     @GetMapping
     @Operation(summary = "Query deliveries", description = "Filter by status, eventId, or endpointId")
     public ResponseEntity<List<DeliveryResponse>> listDeliveries(
