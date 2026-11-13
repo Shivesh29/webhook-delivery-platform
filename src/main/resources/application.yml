@@ -1,0 +1,49 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: webhook-delivery-platform
+  profiles:
+    active: dev
+  threads:
+    virtual:
+      enabled: true
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+
+webhook:
+  security:
+    # Default admin API key for authenticating incoming requests
+    api-key: "wh_live_adminkey_2026_secret"
+  delivery:
+    max-attempts: 5
+    connect-timeout-ms: 3000
+    read-timeout-ms: 5000
+    # Base backoff delays in seconds for retry attempts (attempt 1: immediate, attempt 2: +60s, attempt 3: +300s, attempt 4: +1800s, attempt 5: +7200s)
+    backoff-multipliers-seconds:
+      - 60
+      - 300
+      - 1800
+      - 7200
+  worker:
+    polling-interval-ms: 5000
+    batch-size: 50
+

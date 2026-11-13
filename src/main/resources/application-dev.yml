@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/webhook_platform
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+logging:
+  level:
+    com.webhook.platform: DEBUG
+    org.springframework.web: INFO
+
