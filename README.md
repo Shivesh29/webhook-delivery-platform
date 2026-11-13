@@ -58,10 +58,10 @@ docker compose up -d postgres
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
-The application will start on `http://localhost:8080`.
+The application will start on `http://localhost:8085`.
 
 Interactive Swagger UI documentation is available at:
-👉 **`http://localhost:8080/swagger-ui.html`**
+👉 **`http://localhost:8085/swagger-ui.html`**
 
 ---
 
@@ -73,11 +73,11 @@ Default API Key for management operations: `wh_live_adminkey_2026_secret`
 Target our built-in test receiver (`/api/v1/test-receiver/webhook`):
 
 ```powershell
-curl.exe -X POST "http://localhost:8080/api/v1/endpoints" `
+curl.exe -X POST "http://localhost:8085/api/v1/endpoints" `
   -H "X-API-Key: wh_live_adminkey_2026_secret" `
   -H "Content-Type: application/json" `
   -d '{
-    "url": "http://localhost:8080/api/v1/test-receiver/webhook",
+    "url": "http://localhost:8085/api/v1/test-receiver/webhook",
     "description": "Order processing webhook",
     "subscribedEvents": "order.created,order.updated"
   }'
@@ -88,7 +88,7 @@ curl.exe -X POST "http://localhost:8080/api/v1/endpoints" `
 
 ### 2. Publish an Event (with Idempotency Key)
 ```powershell
-curl.exe -X POST "http://localhost:8080/api/v1/events" `
+curl.exe -X POST "http://localhost:8085/api/v1/events" `
   -H "X-API-Key: wh_live_adminkey_2026_secret" `
   -H "Idempotency-Key: evt_order_1001" `
   -H "Content-Type: application/json" `
@@ -103,7 +103,7 @@ curl.exe -X POST "http://localhost:8080/api/v1/events" `
 ### 3. Verify Idempotency Deduplication
 Run the exact same command again with the same `Idempotency-Key: evt_order_1001`:
 ```powershell
-curl.exe -X POST "http://localhost:8080/api/v1/events" `
+curl.exe -X POST "http://localhost:8085/api/v1/events" `
   -H "X-API-Key: wh_live_adminkey_2026_secret" `
   -H "Idempotency-Key: evt_order_1001" `
   -H "Content-Type: application/json" `
@@ -119,7 +119,7 @@ curl.exe -X POST "http://localhost:8080/api/v1/events" `
 ### 4. Inspect Captured Requests on Receiver
 See the exact headers received by the receiver, including HMAC signature:
 ```powershell
-curl.exe -X GET "http://localhost:8080/api/v1/test-receiver/requests"
+curl.exe -X GET "http://localhost:8085/api/v1/test-receiver/requests"
 ```
 
 Headers sent with every webhook:
@@ -133,10 +133,10 @@ Headers sent with every webhook:
 ### 5. Inspect Delivery History and Attempt Logs
 ```powershell
 # List deliveries
-curl.exe -X GET "http://localhost:8080/api/v1/deliveries" -H "X-API-Key: wh_live_adminkey_2026_secret"
+curl.exe -X GET "http://localhost:8085/api/v1/deliveries" -H "X-API-Key: wh_live_adminkey_2026_secret"
 
 # View specific attempt audit trail
-curl.exe -X GET "http://localhost:8080/api/v1/deliveries/<DELIVERY_ID>/attempts" -H "X-API-Key: wh_live_adminkey_2026_secret"
+curl.exe -X GET "http://localhost:8085/api/v1/deliveries/<DELIVERY_ID>/attempts" -H "X-API-Key: wh_live_adminkey_2026_secret"
 ```
 
 ---
@@ -144,18 +144,18 @@ curl.exe -X GET "http://localhost:8080/api/v1/deliveries/<DELIVERY_ID>/attempts"
 ### 6. Test Flaky Downstream & Retries
 Register an endpoint pointing to the flaky simulator:
 ```powershell
-curl.exe -X POST "http://localhost:8080/api/v1/endpoints" `
+curl.exe -X POST "http://localhost:8085/api/v1/endpoints" `
   -H "X-API-Key: wh_live_adminkey_2026_secret" `
   -H "Content-Type: application/json" `
   -d '{
-    "url": "http://localhost:8080/api/v1/test-receiver/flaky",
+    "url": "http://localhost:8085/api/v1/test-receiver/flaky",
     "description": "Flaky service endpoint",
     "subscribedEvents": "flaky.test"
   }'
 ```
 Publish an event:
 ```powershell
-curl.exe -X POST "http://localhost:8080/api/v1/events" `
+curl.exe -X POST "http://localhost:8085/api/v1/events" `
   -H "X-API-Key: wh_live_adminkey_2026_secret" `
   -H "Idempotency-Key: flaky_001" `
   -H "Content-Type: application/json" `
@@ -172,7 +172,7 @@ Inspect attempts: the delivery will record 500 responses on initial tries, sched
 If a delivery fails all max retry attempts, its status becomes `DEAD_LETTER`.
 You can manually replay it at any time:
 ```powershell
-curl.exe -X POST "http://localhost:8080/api/v1/deliveries/<DELIVERY_ID>/replay" `
+curl.exe -X POST "http://localhost:8085/api/v1/deliveries/<DELIVERY_ID>/replay" `
   -H "X-API-Key: wh_live_adminkey_2026_secret"
 ```
 
